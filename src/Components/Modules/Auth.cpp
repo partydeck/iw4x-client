@@ -525,69 +525,10 @@ namespace Components
 		token = computeToken;
 	}
 
-	// A somewhat hardware tied 48 bit value
+	// Random 48-bit value
 	std::string Auth::GetMachineEntropy()
 	{
-		std::string entropy{};
-		DWORD volumeID;
-		if (GetVolumeInformationA("C:\\",
-			NULL,
-			NULL,
-			&volumeID,
-			NULL,
-			NULL,
-			NULL,
-			NULL
-		))
-		{
-			// Drive info
-			entropy += std::to_string(volumeID);
-		}
-
-		// MAC Address
-		{
-			unsigned long outBufLen = 0;
-			DWORD dwResult = GetAdaptersInfo(NULL, &outBufLen);
-			if (dwResult == ERROR_BUFFER_OVERFLOW)  // This is what we're expecting
-			{
-				// Now allocate a structure of the required size.
-				std::vector<std::uint8_t> buffer(outBufLen);
-				auto* pIpAdapterInfo = reinterpret_cast<PIP_ADAPTER_INFO>(buffer.data());
-				{
-					dwResult = GetAdaptersInfo(pIpAdapterInfo, &outBufLen);
-					if (dwResult == ERROR_SUCCESS)
-					{
-						for (auto* adapter = pIpAdapterInfo; adapter; adapter = adapter->Next)
-						{
-							switch (adapter->Type)
-							{
-								case IF_TYPE_IEEE80211:
-								case MIB_IF_TYPE_ETHERNET:
-								{
-									for (UINT i = 0; i < adapter->AddressLength; i++)
-									{
-										entropy += std::to_string(adapter->Address[i]);
-									}
-
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-
-		}
-
-		if (entropy.empty())
-		{
-			// ultimate fallback
-			return std::to_string(Utils::Cryptography::Rand::GenerateLong());
-		}
-		else
-		{
-			return entropy;
-		}
+		return std::to_string(Utils::Cryptography::Rand::GenerateLong());
 	}
 
 	Auth::Auth()
